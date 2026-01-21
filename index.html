@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parma 2027 - Final Functional Fix</title>
+    <title>Parma 2027 - Final Layers</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,75 +43,47 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             display: flex; align-items: center; justify-content: center; 
             flex-shrink: 0; border-radius: 24px 24px 0 0;
-            position: relative; z-index: 60; /* Toolbar sempre in primo piano */
+            position: relative; z-index: 100; /* Toolbar sempre sopra */
         }
         .window-title { font-size: 0.8rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
         .window-content {
             flex-grow: 1; position: relative; display: flex; flex-direction: column;
             width: 100%; 
-            overflow: hidden; /* Contenitore principale fisso */
+            overflow: hidden;
         }
 
-        /* HEADER "FANTASMA" */
+        /* LIVELLO 1: TESTI (Sotto a tutto) */
         .page-header {
             position: absolute; top: 0; left: 0; right: 0;
             padding-top: 30px; padding-bottom: 10px; text-align: center; 
+            z-index: 1; /* Livello più basso */
             padding-left: 20px; padding-right: 20px;
-            
-            /* Z-Index ALTO per stare sopra alla timeline */
-            z-index: 50; 
-            
-            /* MAGIC FIX: Lascia passare i click attraverso l'area vuota */
-            pointer-events: none; 
         }
+        h1 { margin: 0; font-weight: 800; color: var(--parma-blue); text-transform: uppercase; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.1; }
+        p { color: #444; font-size: clamp(0.8rem, 1vw, 1rem); margin-top: 10px; font-weight: 400; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
-        h1 { margin: 0; font-weight: 800; color: var(--parma-blue); text-transform: uppercase; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.1; pointer-events: auto; }
-        
-        p { 
-            color: #444; 
-            font-size: clamp(0.8rem, 1vw, 1rem); 
-            margin-top: 10px; 
-            font-weight: 400; 
-            max-width: 800px; 
-            margin-left: auto; 
-            margin-right: auto;
-            line-height: 1.5;
-            pointer-events: auto; /* Testo selezionabile */
-        }
-
-        /* PULSANTE CLICCABILE */
-        #scroll-btn {
-            position: relative; 
-            z-index: 100; /* Sopra a tutto nell'header */
-            pointer-events: auto; /* Riattiva il click specificamente per il pulsante */
-            cursor: pointer;
-        }
-
-        /* CONTAINER SCROLLABILE */
+        /* LIVELLO 2: TIMELINE (Copre i testi, ma sta sotto al pulsante) */
         .scroll-container {
             position: absolute; top: 0; bottom: 0; left: 0; right: 0;
             display: flex; align-items: center; 
-            
-            /* Abilita lo scroll e l'overflow visibile per le card */
             overflow-x: auto; 
             overflow-y: visible;
             
-            /* Padding abbondante per non tagliare le card in alto */
-            padding-top: 250px; 
-            padding-bottom: 100px; 
+            /* Padding Desktop (Spazio per card in alto) */
+            padding-top: 400px; 
+            padding-bottom: 200px; 
             
-            /* Z-Index inferiore all'header, ma ABILITATO all'interazione */
-            z-index: 40; 
-            pointer-events: auto; /* IMPORTANTE: Abilita scroll su mobile */
+            z-index: 10; /* Sopra al testo (1), Sotto al pulsante (20) */
+            pointer-events: auto; /* Scroll attivo */
             
             scroll-snap-type: x mandatory; scroll-behavior: smooth;
         }
 
-        /* Su mobile aumentiamo lo spazio sopra */
+        /* Mobile Padding */
         @media (max-width: 768px) {
             .scroll-container {
-                padding-top: 280px;
+                padding-top: 250px; 
                 padding-bottom: 120px;
             }
         }
@@ -119,6 +91,29 @@
         .scroll-container::-webkit-scrollbar { height: 12px; }
         .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
         .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+
+        /* LIVELLO 3: PULSANTE (Sopra a tutto) */
+        .controls-layer {
+            position: absolute; top: 160px; left: 0; right: 0;
+            display: flex; justify-content: center;
+            z-index: 20; /* Sopra alla timeline */
+            pointer-events: none; /* Lascia passare i click ai lati del pulsante */
+        }
+        
+        /* Regolazione posizione pulsante su mobile */
+        @media (max-width: 768px) {
+            .controls-layer { top: 180px; }
+        }
+
+        .scroll-indicator-box {
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
+            padding: 10px 24px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0, 51, 153, 0.15); 
+            color: var(--parma-blue); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; 
+            animation: bounce 2s infinite;
+            pointer-events: auto; /* Il pulsante è cliccabile */
+        }
 
         .universe {
             display: flex; align-items: center; position: relative;
@@ -136,7 +131,7 @@
             background: linear-gradient(90deg, rgba(0,51,153, 0) 0%, rgba(0,51,153, 0.25) 5%, rgba(0,51,153, 0.25) 95%, rgba(0,51,153, 0) 100%);
         }
 
-        /* SISTEMA SOLARE */
+        /* SUN SYSTEM */
         .sun-system {
             position: relative; width: 320px; height: 500px;
             scroll-snap-align: center; flex-shrink: 0; 
@@ -146,8 +141,8 @@
             transform-style: preserve-3d;
         }
         
-        /* Quando attivo, sale di livello nel contesto dello scroll */
-        .sun-system.active { z-index: 9999 !important; }
+        /* Quando attivo, sale sopra a tutto dentro il container */
+        .sun-system.active { z-index: 999 !important; }
 
         @media (max-height: 800px) { .sun-system { transform: scale(0.8); } }
         @media (max-height: 600px) { .sun-system { transform: scale(0.65); } }
@@ -155,8 +150,7 @@
         .core-dot {
             position: absolute; width: 36px; height: 36px; background: var(--parma-yellow);
             border: 6px solid white; border-radius: 50%; box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-            z-index: 10; 
-            cursor: pointer; transition: all 0.4s ease;
+            z-index: 10; cursor: pointer; transition: all 0.4s ease;
         }
 
         .label-event {
@@ -267,8 +261,12 @@
             <div class="page-header">
                 <h1>PARMA 2027</h1>
                 <p>Una prima prova di pianificazione di contenuti a partire dai prossimi eventi. Clicca su evento e su ogni icona per vedere le varie azioni di comunicazione da sviluppare.</p>
-                <div class="scroll-indicator-box" id="scroll-btn" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; padding: 10px 24px; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 51, 153, 0.05); color: var(--parma-blue); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; animation: bounce 2s infinite;">SCORRI LA TIMELINE ➜</div>
             </div>
+
+            <div class="controls-layer">
+                <div class="scroll-indicator-box" id="scroll-btn">SCORRI LA TIMELINE ➜</div>
+            </div>
+
             <div class="scroll-container">
                 <div class="universe" id="universe-container">
                     <div id="loading">Caricamento dati...</div>
