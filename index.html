@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parma 2027 - Final Release</title>
+    <title>Parma 2027 - Final Interaction Fix</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,7 +52,7 @@
             width: 100%; overflow: hidden;
         }
 
-        /* --- LIVELLO 1: TESTI (Sotto) --- */
+        /* HEADER (Livello 1) */
         .page-header {
             position: absolute; top: 0; left: 0; right: 0;
             padding-top: 30px; padding-bottom: 10px; text-align: center; 
@@ -62,55 +62,18 @@
         h1 { margin: 0; font-weight: 800; color: var(--parma-blue); text-transform: uppercase; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.1; }
         p { color: #444; font-size: clamp(0.8rem, 1vw, 1rem); margin-top: 10px; font-weight: 400; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
-        /* --- LIVELLO 2: TIMELINE (Mezzo - RIATTIVATO SCROLL) --- */
-        .scroll-container {
-            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
-            display: flex; align-items: center; 
-            overflow-x: auto; 
-            overflow-y: visible;
-            
-            /* Spazio per le card */
-            padding-top: 400px; 
-            padding-bottom: 200px; 
-            
-            /* Z-Index 10: Sopra al testo (1), ma sotto al pulsante (50) */
-            z-index: 10; 
-            
-            /* CRUCIALE: ABILITA LO SCROLL E IL TOCCO */
-            pointer-events: auto; 
-            
-            scroll-snap-type: x mandatory; scroll-behavior: smooth;
-        }
-
-        @media (max-width: 768px) {
-            .scroll-container {
-                padding-top: 250px; 
-                padding-bottom: 120px;
-            }
-        }
-        
-        .scroll-container::-webkit-scrollbar { height: 12px; }
-        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
-        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
-
-        /* --- LIVELLO 3: PULSANTE (Sopra Timeline) --- */
+        /* PULSANTE (Livello 2 - Normale) */
         .controls-layer {
             position: absolute; top: 160px; left: 0; right: 0;
             display: flex; justify-content: center;
-            z-index: 50; /* Sopra alla timeline così è cliccabile */
-            pointer-events: none; /* Lascia passare i click ai lati */
-            transition: opacity 0.3s ease; /* Effetto sparizione */
-        }
-        
-        /* Classe per nascondere il pulsante quando una scheda è aperta */
-        .controls-layer.hidden {
-            opacity: 0;
+            z-index: 50; /* Di base sta sopra alla timeline (che è 10) */
             pointer-events: none;
+            transition: opacity 0.3s ease;
         }
         
-        @media (max-width: 768px) {
-            .controls-layer { top: 180px; }
-        }
+        .controls-layer.hidden { opacity: 0; pointer-events: none; }
+        
+        @media (max-width: 768px) { .controls-layer { top: 180px; } }
 
         .scroll-indicator-box {
             cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
@@ -119,10 +82,35 @@
             box-shadow: 0 4px 15px rgba(0, 51, 153, 0.15); 
             color: var(--parma-blue); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; 
             animation: bounce 2s infinite;
-            pointer-events: auto; /* Il pulsante è cliccabile */
+            pointer-events: auto; 
         }
 
-        /* --- GLI OGGETTI DELLA TIMELINE --- */
+        /* TIMELINE (Livello 10 - Base) */
+        .scroll-container {
+            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+            display: flex; align-items: center; 
+            overflow-x: auto; overflow-y: visible;
+            padding-top: 450px; padding-bottom: 200px; 
+            
+            z-index: 10; /* Di base è sotto al pulsante (50) */
+            
+            pointer-events: auto; /* Scroll sempre attivo */
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+        }
+
+        /* CLASSE SPECIALE: Quando attiva, la timeline salta sopra al pulsante */
+        .scroll-container.z-high {
+            z-index: 100 !important;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-container { padding-top: 280px; padding-bottom: 120px; }
+        }
+        
+        .scroll-container::-webkit-scrollbar { height: 12px; }
+        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
+        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+
         .universe {
             display: flex; align-items: center; position: relative;
             height: 100%; width: max-content; 
@@ -148,8 +136,7 @@
             transform-style: preserve-3d;
         }
         
-        /* Quando attivo, il sistema solare sale sopra al pulsante (Z-50) */
-        .sun-system.active { z-index: 100 !important; }
+        .sun-system.active { z-index: 999 !important; }
 
         @media (max-height: 800px) { .sun-system { transform: scale(0.8); } }
         @media (max-height: 600px) { .sun-system { transform: scale(0.65); } }
@@ -184,9 +171,8 @@
             pointer-events: auto;
         }
 
-        /* Wrapper con card attiva sale in cima */
         .sat-wrapper:has(.satellite-body.active) {
-            z-index: 200 !important;
+            z-index: 100 !important;
         }
 
         .satellite-body {
@@ -274,7 +260,7 @@
                 <div class="scroll-indicator-box" id="scroll-btn">SCORRI LA TIMELINE ➜</div>
             </div>
 
-            <div class="scroll-container">
+            <div class="scroll-container" id="main-scroll">
                 <div class="universe" id="universe-container">
                     <div id="loading">Caricamento dati...</div>
                     <div class="timeline-line"></div>
@@ -371,22 +357,20 @@
 
         function attachInteractions() {
             document.getElementById('scroll-btn').addEventListener('click', () => {
-                // SCROLL CALIBRATO
-                // Mobile: 180px (scorre meno, più controllo)
-                // Desktop: 320px
                 const scrollAmount = window.innerWidth < 768 ? 180 : 320;
                 document.querySelector('.scroll-container').scrollBy({ left: scrollAmount, behavior: 'smooth' });
             });
             
             const systems = document.querySelectorAll('.sun-system');
             const controlsBox = document.getElementById('controls-box');
+            const mainScroll = document.getElementById('main-scroll');
 
             systems.forEach(system => {
                 system.querySelector('.core-dot').addEventListener('click', (e) => {
                     e.stopPropagation();
                     if(document.getElementById('first-hint')) document.getElementById('first-hint').style.opacity = '0';
                     
-                    // Chiudi altri sistemi
+                    // Chiudi altri
                     systems.forEach(s => { 
                         if (s !== system) { 
                             s.classList.remove('active'); 
@@ -396,11 +380,13 @@
                     
                     system.classList.toggle('active');
                     
-                    // SE un sistema è attivo, nascondi il pulsante scorri
+                    // LOGICA Z-INDEX E PULSANTE
                     if(system.classList.contains('active')) {
                         controlsBox.classList.add('hidden');
+                        mainScroll.classList.add('z-high'); // PORTA TIMELINE SOPRA
                     } else {
                         controlsBox.classList.remove('hidden');
+                        mainScroll.classList.remove('z-high'); // RIPORTA TIMELINE SOTTO
                     }
                 });
 
@@ -421,9 +407,10 @@
                 if (activeCard) {
                     activeCard.classList.remove('active');
                 } else if (!e.target.closest('.core-dot') && !e.target.closest('#scroll-btn')) {
-                    // Cliccato fuori: chiudi tutto e mostra pulsante
+                    // Cliccato fuori: Reset completo
                     document.querySelectorAll('.sun-system.active').forEach(s => s.classList.remove('active'));
                     controlsBox.classList.remove('hidden');
+                    mainScroll.classList.remove('z-high');
                 }
             });
         }
