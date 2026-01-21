@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parma 2027 - Final Layers</title>
+    <title>Parma 2027 - Final Hierarchy</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,7 +43,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             display: flex; align-items: center; justify-content: center; 
             flex-shrink: 0; border-radius: 24px 24px 0 0;
-            position: relative; z-index: 100; /* Toolbar sempre sopra */
+            position: relative; z-index: 200; /* Toolbar sempre sopra tutto */
         }
         .window-title { font-size: 0.8rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
@@ -53,51 +53,22 @@
             overflow: hidden;
         }
 
-        /* LIVELLO 1: TESTI (Sotto a tutto) */
+        /* LIVELLO 1 (FONDO): TESTI */
         .page-header {
             position: absolute; top: 0; left: 0; right: 0;
             padding-top: 30px; padding-bottom: 10px; text-align: center; 
-            z-index: 1; /* Livello più basso */
+            z-index: 1; 
             padding-left: 20px; padding-right: 20px;
         }
         h1 { margin: 0; font-weight: 800; color: var(--parma-blue); text-transform: uppercase; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.1; }
         p { color: #444; font-size: clamp(0.8rem, 1vw, 1rem); margin-top: 10px; font-weight: 400; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
-        /* LIVELLO 2: TIMELINE (Copre i testi, ma sta sotto al pulsante) */
-        .scroll-container {
-            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
-            display: flex; align-items: center; 
-            overflow-x: auto; 
-            overflow-y: visible;
-            
-            /* Padding Desktop (Spazio per card in alto) */
-            padding-top: 400px; 
-            padding-bottom: 200px; 
-            
-            z-index: 10; /* Sopra al testo (1), Sotto al pulsante (20) */
-            pointer-events: auto; /* Scroll attivo */
-            
-            scroll-snap-type: x mandatory; scroll-behavior: smooth;
-        }
-
-        /* Mobile Padding */
-        @media (max-width: 768px) {
-            .scroll-container {
-                padding-top: 250px; 
-                padding-bottom: 120px;
-            }
-        }
-        
-        .scroll-container::-webkit-scrollbar { height: 12px; }
-        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
-        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
-
-        /* LIVELLO 3: PULSANTE (Sopra a tutto) */
+        /* LIVELLO 2 (MEZZO): PULSANTE */
         .controls-layer {
             position: absolute; top: 160px; left: 0; right: 0;
             display: flex; justify-content: center;
-            z-index: 20; /* Sopra alla timeline */
-            pointer-events: none; /* Lascia passare i click ai lati del pulsante */
+            z-index: 50; /* Sotto alla timeline, sopra al testo */
+            pointer-events: none;
         }
         
         /* Regolazione posizione pulsante su mobile */
@@ -115,7 +86,38 @@
             pointer-events: auto; /* Il pulsante è cliccabile */
         }
 
+        /* LIVELLO 3 (CIMA): TIMELINE E SCHEDE */
+        .scroll-container {
+            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+            display: flex; align-items: center; 
+            overflow-x: auto; 
+            overflow-y: visible;
+            
+            /* Padding Desktop (Spazio per card in alto) */
+            padding-top: 400px; 
+            padding-bottom: 200px; 
+            
+            /* ORA QUESTO È IL LIVELLO PIÙ ALTO */
+            z-index: 100; 
+            
+            /* TRUCCO MAGICO: Il contenitore è "trasparente" ai click, 
+               così puoi cliccare il pulsante che sta sotto (Livello 50) */
+            pointer-events: none; 
+            
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+        }
+
+        /* Mobile Padding */
+        @media (max-width: 768px) {
+            .scroll-container {
+                padding-top: 250px; 
+                padding-bottom: 120px;
+            }
+        }
+        
+        /* Riattiviamo i click sugli oggetti interni (pianeti e schede) */
         .universe {
+            pointer-events: auto;
             display: flex; align-items: center; position: relative;
             height: 100%; width: max-content; 
             box-sizing: border-box; 
@@ -125,6 +127,10 @@
         @media (max-width: 768px) {
             .universe { padding-left: calc(50vw - 160px); padding-right: calc(50vw - 160px); }
         }
+        
+        .scroll-container::-webkit-scrollbar { height: 12px; pointer-events: auto; }
+        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
+        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
 
         .timeline-line {
             position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 4px; z-index: 0;
@@ -141,7 +147,8 @@
             transform-style: preserve-3d;
         }
         
-        /* Quando attivo, sale sopra a tutto dentro il container */
+        /* Quando attivo, resta sempre dentro il contesto Z-100 del container, 
+           ma sale sopra agli altri pianeti */
         .sun-system.active { z-index: 999 !important; }
 
         @media (max-height: 800px) { .sun-system { transform: scale(0.8); } }
