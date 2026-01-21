@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parma 2027 - Final Hierarchy</title>
+    <title>Parma 2027 - Final Release</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,17 +43,16 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             display: flex; align-items: center; justify-content: center; 
             flex-shrink: 0; border-radius: 24px 24px 0 0;
-            position: relative; z-index: 200; /* Toolbar sempre sopra tutto */
+            position: relative; z-index: 200;
         }
         .window-title { font-size: 0.8rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
         .window-content {
             flex-grow: 1; position: relative; display: flex; flex-direction: column;
-            width: 100%; 
-            overflow: hidden;
+            width: 100%; overflow: hidden;
         }
 
-        /* LIVELLO 1 (FONDO): TESTI */
+        /* --- LIVELLO 1: TESTI (Sotto) --- */
         .page-header {
             position: absolute; top: 0; left: 0; right: 0;
             padding-top: 30px; padding-bottom: 10px; text-align: center; 
@@ -63,15 +62,52 @@
         h1 { margin: 0; font-weight: 800; color: var(--parma-blue); text-transform: uppercase; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.1; }
         p { color: #444; font-size: clamp(0.8rem, 1vw, 1rem); margin-top: 10px; font-weight: 400; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
-        /* LIVELLO 2 (MEZZO): PULSANTE */
+        /* --- LIVELLO 2: TIMELINE (Mezzo - RIATTIVATO SCROLL) --- */
+        .scroll-container {
+            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+            display: flex; align-items: center; 
+            overflow-x: auto; 
+            overflow-y: visible;
+            
+            /* Spazio per le card */
+            padding-top: 400px; 
+            padding-bottom: 200px; 
+            
+            /* Z-Index 10: Sopra al testo (1), ma sotto al pulsante (50) */
+            z-index: 10; 
+            
+            /* CRUCIALE: ABILITA LO SCROLL E IL TOCCO */
+            pointer-events: auto; 
+            
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-container {
+                padding-top: 250px; 
+                padding-bottom: 120px;
+            }
+        }
+        
+        .scroll-container::-webkit-scrollbar { height: 12px; }
+        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
+        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+
+        /* --- LIVELLO 3: PULSANTE (Sopra Timeline) --- */
         .controls-layer {
             position: absolute; top: 160px; left: 0; right: 0;
             display: flex; justify-content: center;
-            z-index: 50; /* Sotto alla timeline, sopra al testo */
+            z-index: 50; /* Sopra alla timeline così è cliccabile */
+            pointer-events: none; /* Lascia passare i click ai lati */
+            transition: opacity 0.3s ease; /* Effetto sparizione */
+        }
+        
+        /* Classe per nascondere il pulsante quando una scheda è aperta */
+        .controls-layer.hidden {
+            opacity: 0;
             pointer-events: none;
         }
         
-        /* Regolazione posizione pulsante su mobile */
         @media (max-width: 768px) {
             .controls-layer { top: 180px; }
         }
@@ -86,38 +122,8 @@
             pointer-events: auto; /* Il pulsante è cliccabile */
         }
 
-        /* LIVELLO 3 (CIMA): TIMELINE E SCHEDE */
-        .scroll-container {
-            position: absolute; top: 0; bottom: 0; left: 0; right: 0;
-            display: flex; align-items: center; 
-            overflow-x: auto; 
-            overflow-y: visible;
-            
-            /* Padding Desktop (Spazio per card in alto) */
-            padding-top: 400px; 
-            padding-bottom: 200px; 
-            
-            /* ORA QUESTO È IL LIVELLO PIÙ ALTO */
-            z-index: 100; 
-            
-            /* TRUCCO MAGICO: Il contenitore è "trasparente" ai click, 
-               così puoi cliccare il pulsante che sta sotto (Livello 50) */
-            pointer-events: none; 
-            
-            scroll-snap-type: x mandatory; scroll-behavior: smooth;
-        }
-
-        /* Mobile Padding */
-        @media (max-width: 768px) {
-            .scroll-container {
-                padding-top: 250px; 
-                padding-bottom: 120px;
-            }
-        }
-        
-        /* Riattiviamo i click sugli oggetti interni (pianeti e schede) */
+        /* --- GLI OGGETTI DELLA TIMELINE --- */
         .universe {
-            pointer-events: auto;
             display: flex; align-items: center; position: relative;
             height: 100%; width: max-content; 
             box-sizing: border-box; 
@@ -127,17 +133,12 @@
         @media (max-width: 768px) {
             .universe { padding-left: calc(50vw - 160px); padding-right: calc(50vw - 160px); }
         }
-        
-        .scroll-container::-webkit-scrollbar { height: 12px; pointer-events: auto; }
-        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--parma-blue); border-radius: 10px; border: 3px solid white; cursor: pointer; }
-        .scroll-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
 
         .timeline-line {
             position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 4px; z-index: 0;
             background: linear-gradient(90deg, rgba(0,51,153, 0) 0%, rgba(0,51,153, 0.25) 5%, rgba(0,51,153, 0.25) 95%, rgba(0,51,153, 0) 100%);
         }
 
-        /* SUN SYSTEM */
         .sun-system {
             position: relative; width: 320px; height: 500px;
             scroll-snap-align: center; flex-shrink: 0; 
@@ -147,9 +148,8 @@
             transform-style: preserve-3d;
         }
         
-        /* Quando attivo, resta sempre dentro il contesto Z-100 del container, 
-           ma sale sopra agli altri pianeti */
-        .sun-system.active { z-index: 999 !important; }
+        /* Quando attivo, il sistema solare sale sopra al pulsante (Z-50) */
+        .sun-system.active { z-index: 100 !important; }
 
         @media (max-height: 800px) { .sun-system { transform: scale(0.8); } }
         @media (max-height: 600px) { .sun-system { transform: scale(0.65); } }
@@ -184,8 +184,9 @@
             pointer-events: auto;
         }
 
+        /* Wrapper con card attiva sale in cima */
         .sat-wrapper:has(.satellite-body.active) {
-            z-index: 100 !important;
+            z-index: 200 !important;
         }
 
         .satellite-body {
@@ -204,7 +205,6 @@
             opacity: 0.15; transform-origin: top center; transition: height 0.5s ease; pointer-events: none;
             transform: rotate(var(--angle)); z-index: 1;
         }
-        
         .sun-system.active .connector { height: 180px; }
 
         .glass-card {
@@ -270,7 +270,7 @@
                 <p>Una prima prova di pianificazione di contenuti a partire dai prossimi eventi. Clicca su evento e su ogni icona per vedere le varie azioni di comunicazione da sviluppare.</p>
             </div>
 
-            <div class="controls-layer">
+            <div class="controls-layer" id="controls-box">
                 <div class="scroll-indicator-box" id="scroll-btn">SCORRI LA TIMELINE ➜</div>
             </div>
 
@@ -371,30 +371,60 @@
 
         function attachInteractions() {
             document.getElementById('scroll-btn').addEventListener('click', () => {
-                const scrollAmount = window.innerWidth < 768 ? 260 : 320;
+                // SCROLL CALIBRATO
+                // Mobile: 180px (scorre meno, più controllo)
+                // Desktop: 320px
+                const scrollAmount = window.innerWidth < 768 ? 180 : 320;
                 document.querySelector('.scroll-container').scrollBy({ left: scrollAmount, behavior: 'smooth' });
             });
             
             const systems = document.querySelectorAll('.sun-system');
+            const controlsBox = document.getElementById('controls-box');
+
             systems.forEach(system => {
                 system.querySelector('.core-dot').addEventListener('click', (e) => {
                     e.stopPropagation();
                     if(document.getElementById('first-hint')) document.getElementById('first-hint').style.opacity = '0';
-                    systems.forEach(s => { if (s !== system) { s.classList.remove('active'); s.querySelectorAll('.satellite-body').forEach(sat => sat.classList.remove('active')); } });
+                    
+                    // Chiudi altri sistemi
+                    systems.forEach(s => { 
+                        if (s !== system) { 
+                            s.classList.remove('active'); 
+                            s.querySelectorAll('.satellite-body').forEach(sat => sat.classList.remove('active')); 
+                        } 
+                    });
+                    
                     system.classList.toggle('active');
+                    
+                    // SE un sistema è attivo, nascondi il pulsante scorri
+                    if(system.classList.contains('active')) {
+                        controlsBox.classList.add('hidden');
+                    } else {
+                        controlsBox.classList.remove('hidden');
+                    }
                 });
+
                 system.querySelectorAll('.satellite-body').forEach(sat => {
                     sat.addEventListener('click', (e) => {
                         e.stopPropagation();
                         if (sat.classList.contains('active')) sat.classList.remove('active');
-                        else { system.querySelectorAll('.satellite-body').forEach(sibling => sibling.classList.remove('active')); sat.classList.add('active'); }
+                        else { 
+                            system.querySelectorAll('.satellite-body').forEach(sibling => sibling.classList.remove('active')); 
+                            sat.classList.add('active'); 
+                        }
                     });
                 });
             });
+
             document.addEventListener('click', (e) => {
                 const activeCard = document.querySelector('.satellite-body.active');
-                if (activeCard) activeCard.classList.remove('active');
-                else if (!e.target.closest('.core-dot')) document.querySelectorAll('.sun-system.active').forEach(s => s.classList.remove('active'));
+                if (activeCard) {
+                    activeCard.classList.remove('active');
+                } else if (!e.target.closest('.core-dot') && !e.target.closest('#scroll-btn')) {
+                    // Cliccato fuori: chiudi tutto e mostra pulsante
+                    document.querySelectorAll('.sun-system.active').forEach(s => s.classList.remove('active'));
+                    controlsBox.classList.remove('hidden');
+                }
             });
         }
         init();
