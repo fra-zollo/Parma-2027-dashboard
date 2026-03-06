@@ -47,7 +47,7 @@
     z-index: -1; overflow: hidden;
   }
   .blob-1 { position: absolute; top: -10%; left: -5%; width: 500px; height: 500px; background: rgba(0, 122, 255, 0.12); border-radius: 50%; filter: blur(80px); }
-  .blob-2 { position: absolute bottom: -20%; right: -5%; width: 600px; height: 600px; background: rgba(255, 149, 0, 0.1); border-radius: 50%; filter: blur(100px); }
+  .blob-2 { position: absolute; bottom: -20%; right: -5%; width: 600px; height: 600px; background: rgba(255, 149, 0, 0.1); border-radius: 50%; filter: blur(100px); }
   .blob-3 { position: absolute; top: 30%; left: 40%; width: 400px; height: 400px; background: rgba(175, 82, 222, 0.08); border-radius: 50%; filter: blur(90px); }
 
   /* --- Header --- */
@@ -521,6 +521,53 @@
   let isRemoteUpdate = false;
   let boardDocRef = null;
 
+  // FUNZIONI DI BACKUP OFFLINE (SALVATAGGIO LOCALE)
+  function getFallbackState() {
+    try {
+      const local = localStorage.getItem('parma_board_v4_backup');
+      if (local) return JSON.parse(local);
+    } catch(e) {}
+    return DEFAULT_BOARD_STATE;
+  }
+
+  function saveFallbackState(state) {
+    try {
+      localStorage.setItem('parma_board_v4_backup', JSON.stringify(state));
+    } catch(e) {}
+  }
+
+  function mergePdfEvents(data) {
+    let needsUpdate = false;
+    if (!data._pdf_events_added) {
+      if (!data.events) data.events = [];
+      const newEvents = [
+        { title: "Road to...2027", color: "#AF52DE", subtitle: "24/01/2026", body: "Evento con le Youth Capital passati e future. Confronto sui temi delle Vie della Trasformazione (FATTO).", assignee: "" },
+        { title: "PROSSIMA", color: "#AF52DE", subtitle: "03/03/2026", body: "Presentazione progetto PROSSIMA per la Pubblica Amministrazione con presenza Ministro Zangrillo.", assignee: "" },
+        { title: "1st Student Conference - RETE EUGREEN", color: "#AF52DE", subtitle: "06/03/2026", body: "Prima student conference della rete EU GREEN. 150 studenti da tutta Europa.", assignee: "" },
+        { title: "Tappa YOUZ a Parma", color: "#AF52DE", subtitle: "20/03/2026", body: "Laboratorio per immaginare insieme il futuro delle politiche giovanili in Emilia-Romagna.", assignee: "" },
+        { title: "ASVIS Assemblea sul Futuro", color: "#AF52DE", subtitle: "20/03/2026", body: "Presentazione del progetto \"Verso la prima Assemblea Nazionale sul Futuro\".", assignee: "" },
+        { title: "Seasonal School in Food City Design", color: "#AF52DE", subtitle: "Marzo-Aprile", body: "In collaborazione con UniPr e Ufficio Unesco Città Creative.", assignee: "" },
+        { title: "Youth Cities", color: "#AF52DE", subtitle: "Aprile", body: "Incontro delle Città Italiane per i Giovani.", assignee: "" },
+        { title: "Piazze sul Futuro & Torneo Debate", color: "#AF52DE", subtitle: "13-24 Maggio", body: "Spazi informali di discussione ASVIS e Torneo di Debate \"San Leonardo\" con scuole dell'Emilia-Romagna.", assignee: "" },
+        { title: "RETHINK", color: "#AF52DE", subtitle: "Giugno", body: "Evento finale del progetto europeo RETHINK.", assignee: "" },
+        { title: "SOSTIENIMI", color: "#AF52DE", subtitle: "22-29 Settembre", body: "Restituzione pubblica nazionale della Youth Voluntary Review (YVR).", assignee: "" },
+        { title: "BEAUTIFUL LIFE", color: "#AF52DE", subtitle: "Ottobre", body: "L'evento lancia nel 2027 la Via della Trasformazione \"Benessere e Qualità della Vita\". Evento satellite del New European Bauhaus Festival 2026.", assignee: "" },
+        { title: "CLAIMING EUROPE", color: "#AF52DE", subtitle: "Novembre", body: "Attivazione Via della Trasformazione \"Partecipazione giovanile\".", assignee: "" },
+        { title: "CONVIVIAL EUROPE", color: "#AF52DE", subtitle: "Dicembre (3-6)", body: "L'evento apre la Via della Trasformazione \"Convivialità delle Differenze\" ospitando l'Annual Event del Corpo Europeo di Solidarietà.", assignee: "" }
+      ];
+
+      newEvents.forEach(evt => {
+        if (!data.events.some(e => e.title === evt.title)) {
+          evt.id = 'pdf_' + Math.random().toString(36).substr(2, 9);
+          data.events.push(evt);
+          needsUpdate = true;
+        }
+      });
+      data._pdf_events_added = true;
+    }
+    return needsUpdate;
+  }
+
   function formatTextToHTML(text) {
     if (!text) return '';
     let lines = text.split('\n'); let html = ''; let inList = false;
@@ -799,11 +846,14 @@
   }
 
   window.saveBoard = async function() {
+    const state = getBoardState();
+    saveFallbackState(state); // Salvataggio offline di sicurezza
+
     if (isRemoteUpdate || !isFirebaseInitialized || !boardDocRef) return;
-    try { await setDoc(boardDocRef, getBoardState()); } catch(e) { console.error("Firebase save error", e); }
+    try { await setDoc(boardDocRef, state); } catch(e) { console.error("Firebase save error", e); }
   }
 
-  // --- 6. Connessione a Firebase Cloud (Anti-Scanner Github) ---
+  // --- 6. Connessione a Firebase Cloud ---
   // Dividiamo la stringa così GitHub non bloccherà più la chiave API
   const keyPart1 = "AIzaSy";
   const keyPart2 = "CJnQ1LS9ZURc02rGrLeT94VkJMKSPYHhs";
@@ -825,6 +875,18 @@
     
     boardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'boards', 'main_board_v4');
 
+    let hasLoaded = false;
+
+    // SISTEMA ANTI-PANICO: Se Firebase non risponde in 2 secondi, carica i dati offline salvati
+    setTimeout(() => {
+      if (!hasLoaded) {
+        console.warn("Avvio Modalità Offline (Timeout/Errore Firebase)");
+        const fallbackData = getFallbackState();
+        mergePdfEvents(fallbackData);
+        renderBoardState(fallbackData);
+      }
+    }, 2000);
+
     const initFirebase = async () => {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -834,38 +896,11 @@
         }
         
         onSnapshot(boardDocRef, async (snapshot) => {
+          hasLoaded = true; // Firebase ha risposto!
           if (snapshot.exists()) {
             const data = snapshot.data();
             
-            let needsUpdate = false;
-            if (!data._pdf_events_added) {
-              if (!data.events) data.events = [];
-              const newEvents = [
-                { title: "Road to...2027", color: "#AF52DE", subtitle: "24/01/2026", body: "Evento con le Youth Capital passati e future. Confronto sui temi delle Vie della Trasformazione (FATTO).", assignee: "" },
-                { title: "PROSSIMA", color: "#AF52DE", subtitle: "03/03/2026", body: "Presentazione progetto PROSSIMA per la Pubblica Amministrazione con presenza Ministro Zangrillo.", assignee: "" },
-                { title: "1st Student Conference - RETE EUGREEN", color: "#AF52DE", subtitle: "06/03/2026", body: "Prima student conference della rete EU GREEN. 150 studenti da tutta Europa.", assignee: "" },
-                { title: "Tappa YOUZ a Parma", color: "#AF52DE", subtitle: "20/03/2026", body: "Laboratorio per immaginare insieme il futuro delle politiche giovanili in Emilia-Romagna.", assignee: "" },
-                { title: "ASVIS Assemblea sul Futuro", color: "#AF52DE", subtitle: "20/03/2026", body: "Presentazione del progetto \"Verso la prima Assemblea Nazionale sul Futuro\".", assignee: "" },
-                { title: "Seasonal School in Food City Design", color: "#AF52DE", subtitle: "Marzo-Aprile", body: "In collaborazione con UniPr e Ufficio Unesco Città Creative.", assignee: "" },
-                { title: "Youth Cities", color: "#AF52DE", subtitle: "Aprile", body: "Incontro delle Città Italiane per i Giovani.", assignee: "" },
-                { title: "Piazze sul Futuro & Torneo Debate", color: "#AF52DE", subtitle: "13-24 Maggio", body: "Spazi informali di discussione ASVIS e Torneo di Debate \"San Leonardo\" con scuole dell'Emilia-Romagna.", assignee: "" },
-                { title: "RETHINK", color: "#AF52DE", subtitle: "Giugno", body: "Evento finale del progetto europeo RETHINK.", assignee: "" },
-                { title: "SOSTIENIMI", color: "#AF52DE", subtitle: "22-29 Settembre", body: "Restituzione pubblica nazionale della Youth Voluntary Review (YVR).", assignee: "" },
-                { title: "BEAUTIFUL LIFE", color: "#AF52DE", subtitle: "Ottobre", body: "L'evento lancia nel 2027 la Via della Trasformazione \"Benessere e Qualità della Vita\". Evento satellite del New European Bauhaus Festival 2026.", assignee: "" },
-                { title: "CLAIMING EUROPE", color: "#AF52DE", subtitle: "Novembre", body: "Attivazione Via della Trasformazione \"Partecipazione giovanile\".", assignee: "" },
-                { title: "CONVIVIAL EUROPE", color: "#AF52DE", subtitle: "Dicembre (3-6)", body: "L'evento apre la Via della Trasformazione \"Convivialità delle Differenze\" ospitando l'Annual Event del Corpo Europeo di Solidarietà.", assignee: "" }
-              ];
-
-              newEvents.forEach(evt => {
-                if (!data.events.some(e => e.title === evt.title)) {
-                  evt.id = 'pdf_' + Math.random().toString(36).substr(2, 9);
-                  data.events.push(evt);
-                  needsUpdate = true;
-                }
-              });
-              data._pdf_events_added = true;
-              needsUpdate = true;
-            }
+            const needsUpdate = mergePdfEvents(data);
 
             isRemoteUpdate = true;
             renderBoardState(data);
@@ -873,16 +908,23 @@
             setTimeout(() => isRemoteUpdate = false, 100);
 
             if (needsUpdate) {
-              try {
-                await updateDoc(boardDocRef, { events: data.events, _pdf_events_added: true });
-              } catch(e) { console.error("Errore salvataggio eventi PDF", e); }
+              try { await updateDoc(boardDocRef, { events: data.events, _pdf_events_added: true }); } catch(e) {}
             }
 
           } else {
-            isFirebaseInitialized = true; renderBoardState(DEFAULT_BOARD_STATE); window.saveBoard();
+            isFirebaseInitialized = true; 
+            const state = getFallbackState(); // Se online è vuoto, prova a ricaricare dal locale
+            mergePdfEvents(state);
+            renderBoardState(state); 
+            window.saveBoard();
           }
-        }, (error) => console.error("Sync error", error));
-      } catch(e) { console.error("Firebase connection error", e); }
+        }, (error) => {
+           console.error("Sync error", error);
+        });
+      } catch(e) { 
+         // Google ha bloccato l'accesso. Il timeout caricherà i dati offline in automatico.
+         console.error("Firebase connection error", e); 
+      }
     };
 
     initFirebase();
