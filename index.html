@@ -509,8 +509,32 @@
     }
   }
 
+  // Rimettiamo i dati di default originali per sicurezza, anche se i tuoi sono in cloud
   const DEFAULT_BOARD_STATE = {
-    "editoriale": [], "todo-short": [], "todo-long": [], "updates": [], "info": [], "archivio": [], "events": []
+    "events": [
+      { id: "card12", title: "Evento con Ministro Zangrillo", color: "#AF52DE", subtitle: "3 Marzo 2026", body: "INC raccoglie e prepara i testi per la stampa.", assignee: "inc" },
+      { id: "card13", title: "Workshop Universitario", color: "#AF52DE", subtitle: "6 Marzo 2026", body: "140 giovani europei. Zollo attiva subito i volontari CLG per formare un gruppo di comunicazione operativo temporaneo.", assignee: "zollo" }
+    ],
+    "editoriale": [],
+    "todo-short": [
+      { id: "card4", title: "Grafica e Identità", color: "#FF9500", subtitle: "Entro questa settimana", body: "MATE definisce la timeline di sviluppo con i grafici vincitori, apporta gli aggiustamenti al logo e inizia a \"esplodere\" brand identity. Creare nuova carta intestata.", assignee: "mate" },
+      { id: "card5", title: "Sito Web e Concept", color: "#FF9500", subtitle: "", body: "MATE e Zollo mettono online un sito web temporaneo. Feedback con il CLG sulla brand identity e sui claim.", assignee: "zollo" },
+      { id: "card6", title: "Task Riunione Mercoledì", color: "#FF9500", subtitle: "", body: "- Decidere identità visiva \"di transizione\".\n- Scegliere tool gestionale calendario/materiali.\n- Calendarizzare confronto Comitato.\n- Definire specifiche digitali.", assignee: "tutti" },
+      { id: "card7", title: "Team Volontari", color: "#FF9500", subtitle: "Avvio Immediato", body: "Creare il gruppo WhatsApp, allargare la base dei volontari e iniziare a lavorare con il supporto di editing di Zollo.", assignee: "zollo" }
+    ],
+    "todo-long": [
+      { id: "card8", title: "Evento Media di Lancio", color: "#1D1D1F", subtitle: "Settembre 2026", body: "Organizzare un grande evento invitando la stampa nazionale ed europea. Preparare in anticipo materiali e storie.", assignee: "inc" },
+      { id: "card9", title: "Lancio Sito Web Ufficiale", color: "#1D1D1F", subtitle: "Settembre 2026", body: "Pubblicare il nuovo sito definitivo, aggiornato e pienamente operativo. Fissare call per elementi tecnici.", assignee: "mate" },
+      { id: "card10", title: "Team Content-Creators", color: "#1D1D1F", subtitle: "Sett 2026 in poi", body: "Guidare l'evoluzione del gruppo di volontari fino alla creazione del \"gruppo di giovani dell'hub creativo\". Valutare tirocini. Strutturare call.", assignee: "zollo" },
+      { id: "card11", title: "Avvio Anno Capitale", color: "#1D1D1F", subtitle: "Da Settembre in poi", body: "Essere pronti a regime con la task force di comunicazione.", assignee: "tutti" }
+    ],
+    "updates": [
+      { id: "card1", title: "Strategia Brand Identity", color: "#007AFF", subtitle: "Riassunto riunione 22/02/2026", body: "MATE ha evidenziato la necessità di un'identità forte che vada oltre la sigla \"EYC\". Volontà di risolvere alcune criticità del logo. Apprezzata l'idea di usare la simbologia, anche quella delle \"4 vie\".", assignee: "mate" },
+      { id: "card2", title: "Gestione Media e Portavoci", color: "#007AFF", subtitle: "", body: "- Media tradizionali: Assessora Aimi e rappresentante giovani (formazione INC).\n- Social Media: approccio corale, assegnare giovani a ogni \"piazza\".", assignee: "inc" },
+      { id: "card3", title: "Ruoli e Supervisione", color: "#007AFF", subtitle: "", body: "INC manterrà stabilmente il ruolo di riferimento principale per la supervisione strategica e dei contenuti.", assignee: "inc" }
+    ],
+    "info": [],
+    "archivio": []
   };
 
   let cardCounter = 1000; 
@@ -524,7 +548,7 @@
   // FUNZIONI DI BACKUP OFFLINE (SALVATAGGIO LOCALE)
   function getFallbackState() {
     try {
-      const local = localStorage.getItem('parma_board_v4_backup');
+      const local = localStorage.getItem('parma_board_v5_backup');
       if (local) return JSON.parse(local);
     } catch(e) {}
     return DEFAULT_BOARD_STATE;
@@ -532,7 +556,7 @@
 
   function saveFallbackState(state) {
     try {
-      localStorage.setItem('parma_board_v4_backup', JSON.stringify(state));
+      localStorage.setItem('parma_board_v5_backup', JSON.stringify(state));
     } catch(e) {}
   }
 
@@ -854,7 +878,6 @@
   }
 
   // --- 6. Connessione a Firebase Cloud ---
-  // Dividiamo la stringa così GitHub non bloccherà più la chiave API
   const keyPart1 = "AIzaSy";
   const keyPart2 = "CJnQ1LS9ZURc02rGrLeT94VkJMKSPYHhs";
 
@@ -873,7 +896,8 @@
     const db = getFirestore(app);
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'parma-dashboard';
     
-    boardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'boards', 'main_board_v4');
+    // QUI ERA L'ERRORE! ORA PUNTA ALLA VERSIONE v5 (dove avevi salvato i tuoi dati)
+    boardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'boards', 'main_board_v5');
 
     let hasLoaded = false;
 
