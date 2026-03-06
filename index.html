@@ -469,7 +469,7 @@
       <div style="display: flex; gap: 8px; margin-right: auto; align-items: center;">
         <button class="modal-btn" id="archiveTaskBtn" style="display: none;" onclick="window.archiveTask()">Archivia</button>
         <!-- Pulsante Elimina ridotto a icona (SVG rosso) -->
-        <button class="icon-btn-delete" id="deleteTaskBtn" style="display: flex; opacity: 0.3; pointer-events: none;" onclick="window.openConfirmModal()" title="Elimina Task">
+        <button class="icon-btn-delete" id="deleteTaskBtn" style="display: none;" onclick="window.openConfirmModal()" title="Elimina Task">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
         </button>
       </div>
@@ -494,7 +494,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  // Aggiunto "updateDoc" alle importazioni
   import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   window.checkPassword = function() {
@@ -633,6 +632,7 @@
     const modal = document.getElementById('taskModal');
     document.getElementById('modalTitle').textContent = 'Nuovo Task';
     document.getElementById('modalSubmitBtn').textContent = 'Aggiungi';
+    
     document.getElementById('deleteTaskBtn').style.display = 'none';
     document.getElementById('archiveTaskBtn').style.display = 'none';
 
@@ -661,6 +661,7 @@
     const modal = document.getElementById('taskModal');
     document.getElementById('modalTitle').textContent = 'Modifica Task';
     document.getElementById('modalSubmitBtn').textContent = 'Salva';
+    
     document.getElementById('deleteTaskBtn').style.display = 'flex';
 
     const colId = card.closest('.card-container').id;
@@ -794,14 +795,14 @@
       });
     });
     
-    // ESSENZIALE: Preserva il flag per non reinserire costantemente i task dal PDF
+    // Preserva il flag per non reinserire i task dal PDF
     state._pdf_events_added = true; 
     return state;
   }
 
   function renderBoardState(state) {
     for (const [colId, cards] of Object.entries(state)) {
-      if (colId === '_pdf_events_added') continue; // Ignora il flag
+      if (colId === '_pdf_events_added') continue;
       
       const container = document.getElementById(colId);
       if (!container) continue;
@@ -822,7 +823,7 @@
 
     const allCards = document.querySelectorAll('.card');
     if (allCards.length > 0) {
-       // BUG FIX: Evita che gli ID delle schede del PDF corrompano il contatore generando "NaN"
+       // Ripara in modo sicuro gli ID per non bloccarsi sui vecchi PDF importati
        const ids = Array.from(allCards)
          .filter(c => c.id.startsWith('card'))
          .map(c => parseInt(c.id.replace('card', '')) || 0);
