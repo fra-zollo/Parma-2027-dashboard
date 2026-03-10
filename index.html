@@ -509,7 +509,7 @@
     }
   }
 
-  // Rimettiamo i dati di default originali per sicurezza, anche se i tuoi sono in cloud
+  // DATI DI EMERGENZA (Se Firebase fallisce, questi verranno sempre mostrati come base)
   const DEFAULT_BOARD_STATE = {
     "events": [
       { id: "card12", title: "Evento con Ministro Zangrillo", color: "#AF52DE", subtitle: "3 Marzo 2026", body: "INC raccoglie e prepara i testi per la stampa.", assignee: "inc" },
@@ -545,12 +545,25 @@
   let isRemoteUpdate = false;
   let boardDocRef = null;
 
-  // FUNZIONI DI BACKUP OFFLINE (SALVATAGGIO LOCALE)
+  // FUNZIONI DI BACKUP OFFLINE (SALVATAGGIO LOCALE SMART)
   function getFallbackState() {
     try {
-      const local = localStorage.getItem('parma_board_v5_backup');
-      if (local) return JSON.parse(local);
+      // Cerca nei salvataggi locali sia della v5 che della v4
+      const local5 = localStorage.getItem('parma_board_v5_backup');
+      const data5 = local5 ? JSON.parse(local5) : null;
+      
+      const local4 = localStorage.getItem('parma_board_v4_backup');
+      const data4 = local4 ? JSON.parse(local4) : null;
+
+      // Conta quante schede ci sono per capire quale salvataggio è più ricco
+      let count5 = 0; if (data5) Object.values(data5).forEach(col => { if(Array.isArray(col)) count5 += col.length; });
+      let count4 = 0; if (data4) Object.values(data4).forEach(col => { if(Array.isArray(col)) count4 += col.length; });
+
+      if (count5 > 0 && count5 >= count4) return data5;
+      if (count4 > 0) return data4;
     } catch(e) {}
+    
+    // Se non c'è traccia di nulla (o sei su un pc nuovo), mostra il template originale
     return DEFAULT_BOARD_STATE;
   }
 
@@ -896,15 +909,15 @@
     const db = getFirestore(app);
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'parma-dashboard';
     
-    // QUI ERA L'ERRORE! ORA PUNTA ALLA VERSIONE v5 (dove avevi salvato i tuoi dati)
+    // Ripuntiamo tutto a v5
     boardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'boards', 'main_board_v5');
 
     let hasLoaded = false;
 
-    // SISTEMA ANTI-PANICO: Se Firebase non risponde in 2 secondi, carica i dati offline salvati
+    // SISTEMA ANTI-PANICO: Se Firebase non risponde o è bloccato, carica i dati d'emergenza salvati
     setTimeout(() => {
       if (!hasLoaded) {
-        console.warn("Avvio Modalità Offline (Timeout/Errore Firebase)");
+        console.warn("Avvio Modalità Offline / Fallback (Timeout o Errore API Firebase)");
         const fallbackData = getFallbackState();
         mergePdfEvents(fallbackData);
         renderBoardState(fallbackData);
@@ -920,7 +933,7 @@
         }
         
         onSnapshot(boardDocRef, async (snapshot) => {
-          hasLoaded = true; // Firebase ha risposto!
+          hasLoaded = true; // Firebase ha risposto con successo
           if (snapshot.exists()) {
             const data = snapshot.data();
             
@@ -937,16 +950,17 @@
 
           } else {
             isFirebaseInitialized = true; 
-            const state = getFallbackState(); // Se online è vuoto, prova a ricaricare dal locale
+            const state = getFallbackState(); // Se nel cloud non c'è nulla, ripesca i dati dal PC
             mergePdfEvents(state);
             renderBoardState(state); 
-            window.saveBoard();
+            window.saveBoard(); // Forza un caricamento sul cloud
           }
         }, (error) => {
            console.error("Sync error", error);
         });
       } catch(e) { 
-         // Google ha bloccato l'accesso. Il timeout caricherà i dati offline in automatico.
+         // Firebase ha bloccato l'accesso (Chiave API revocata)
+         // Nessun problema: il timeout farà apparire i dati salvati offline sul pc.
          console.error("Firebase connection error", e); 
       }
     };
